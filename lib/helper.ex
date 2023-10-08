@@ -1,51 +1,9 @@
 defmodule AssetTracker.Helper do
-  alias AssetTracker.{Purchase, Sale}
+  alias AssetTracker.{Sale, DeductFromPurchases}
 
   def deduct_from_purchases(%{purchases: purchases} = asset_tracker, asset_symbol, quantity) do
-    {updated_purchases, _, selled_assets} =
-      purchases
-      |> Enum.reduce({[], quantity, []}, fn purchase,
-                                            {updated_purchases, remaining_quantity,
-                                             selled_purchases} ->
-        unless Decimal.equal?(remaining_quantity, 0) do
-          case asset_symbol == purchase.symbol do
-            true ->
-              case purchase.quantity do
-                purchase_quantity when purchase_quantity == remaining_quantity ->
-                  {updated_purchases, 0, [purchase | selled_purchases]}
-
-                purchase_quantity when purchase_quantity < remaining_quantity ->
-                  {updated_purchases, Decimal.sub(remaining_quantity, purchase_quantity),
-                   [purchase | selled_purchases]}
-
-                purchase_quantity when purchase_quantity > remaining_quantity ->
-                  updated_purchase =
-                    Purchase.new(
-                      purchase.symbol,
-                      purchase.settle_date,
-                      Decimal.sub(purchase.quantity, remaining_quantity),
-                      purchase.unit_price
-                    )
-
-                  selled_purchase =
-                    Purchase.new(
-                      purchase.symbol,
-                      purchase.settle_date,
-                      remaining_quantity,
-                      purchase.unit_price
-                    )
-
-                  {updated_purchases ++ [updated_purchase], 0,
-                   [selled_purchase | selled_purchases]}
-              end
-
-            false ->
-              {updated_purchases ++ [purchase], remaining_quantity, selled_purchases}
-          end
-        else
-          {updated_purchases ++ [purchase], remaining_quantity, selled_purchases}
-        end
-      end)
+    {updated_purchases, selled_assets} =
+      DeductFromPurchases.exec(purchases, [], asset_symbol, quantity, [])
 
     {Map.put(asset_tracker, :purchases, updated_purchases), selled_assets}
   end
