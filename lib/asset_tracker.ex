@@ -21,12 +21,12 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> AssetTracker.add_purchase(asset_tracker, "AAPL", "2021-01-01", 100, 100.00)
+      iex> AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
-            symbol: "AAPL",
+            symbol: "APPL",
             settle_date: "2021-01-01",
             quantity: 100,
             unit_price: 100.0
@@ -46,23 +46,23 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "AAPL", "2021-01-01", 100, 100.00)
+      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
-            symbol: "AAPL",
+            symbol: "APPL",
             settle_date: "2021-01-01",
             quantity: 100,
             unit_price: 100.0
           }
         ]
       }
-      iex> asset_tracker = AssetTracker.add_sale(asset_tracker, "AAPL", "2021-01-01", 100, 100.00)
+      iex> asset_tracker = AssetTracker.add_sale(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
       {%AssetTracker{
         sales: [
           %AssetTracker.Sale{
-            symbol: "AAPL",
+            symbol: "APPL",
             sell_date: "2021-01-01",
             quantity: 100,
             unit_price: 100.0,
@@ -90,19 +90,19 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "AAPL", "2021-01-01", 100, 100.00)
+      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
-            symbol: "AAPL",
+            symbol: "APPL",
             settle_date: "2021-01-01",
             quantity: 100,
             unit_price: 100.0
           }
         ]
       }
-      iex> AssetTracker.unrealized_gain_or_loss(asset_tracker, "AAPL", 200.00)
+      iex> AssetTracker.unrealized_gain_or_loss(asset_tracker, "APPL", 200.00)
       10000.0
   """
   def unrealized_gain_or_loss(
