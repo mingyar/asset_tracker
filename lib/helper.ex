@@ -7,7 +7,7 @@ defmodule AssetTracker.Helper do
       |> Enum.reduce({[], quantity, []}, fn purchase,
                                             {updated_purchases, remaining_quantity,
                                              selled_purchases} ->
-        unless remaining_quantity == 0 do
+        unless Decimal.equal?(remaining_quantity, 0) do
           case asset_symbol == purchase.symbol do
             true ->
               case purchase.quantity do
@@ -15,7 +15,7 @@ defmodule AssetTracker.Helper do
                   {updated_purchases, 0, [purchase | selled_purchases]}
 
                 purchase_quantity when purchase_quantity < remaining_quantity ->
-                  {updated_purchases, remaining_quantity - purchase_quantity,
+                  {updated_purchases, Decimal.sub(remaining_quantity, purchase_quantity),
                    [purchase | selled_purchases]}
 
                 purchase_quantity when purchase_quantity > remaining_quantity ->
@@ -23,7 +23,7 @@ defmodule AssetTracker.Helper do
                     Purchase.new(
                       purchase.symbol,
                       purchase.settle_date,
-                      purchase.quantity - remaining_quantity,
+                      Decimal.sub(purchase.quantity, remaining_quantity),
                       purchase.unit_price
                     )
 
@@ -51,21 +51,22 @@ defmodule AssetTracker.Helper do
   end
 
   def average(assets) do
-    total_asset_accumulated_value(assets) / total_asset_quantity(assets)
+    total_asset_accumulated_value(assets)
+    |> Decimal.div(total_asset_quantity(assets))
   end
 
   def total_asset_quantity(assets) do
     assets
     |> Enum.map(fn %{quantity: quantity} -> quantity end)
-    |> Enum.sum()
+    |> Enum.reduce(0, &Decimal.add/2)
   end
 
   def total_asset_accumulated_value(assets) do
     assets
     |> Enum.map(fn %{quantity: quantity, unit_price: unit_price} ->
-      quantity * unit_price
+      Decimal.mult(quantity, unit_price)
     end)
-    |> Enum.sum()
+    |> Enum.reduce(0, &Decimal.add/2)
   end
 
   def realized_gain_or_loss({asset_tracker, selled_assets, sale_unit_price}) do
@@ -78,9 +79,9 @@ defmodule AssetTracker.Helper do
     revenue =
       selled_assets
       |> total_asset_quantity()
-      |> Kernel.*(sale_unit_price)
+      |> Decimal.mult(sale_unit_price)
 
-    gain_or_loss = revenue - cost
+    gain_or_loss = Decimal.sub(revenue, cost)
 
     {
       update_last_sale_average_cost(asset_tracker, average_cost),

@@ -21,21 +21,21 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
+      iex> AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
             symbol: "APPL",
             settle_date: "2021-01-01",
-            quantity: 100,
-            unit_price: 100.0
+            quantity: Decimal.new("100"),
+            unit_price: Decimal.new("100")
           }
         ]
       }
   """
   def add_purchase(asset_tracker, asset_symbol, settle_date, quantity, unit_price) do
-    Purchase.new(asset_symbol, settle_date, quantity, unit_price)
+    Purchase.new(asset_symbol, settle_date, Decimal.new(quantity), Decimal.new(unit_price))
     |> Helper.add_purchase(asset_tracker)
   end
 
@@ -46,36 +46,36 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
+      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
             symbol: "APPL",
             settle_date: "2021-01-01",
-            quantity: 100,
-            unit_price: 100.0
+            quantity: Decimal.new("100"),
+            unit_price: Decimal.new("100")
           }
         ]
       }
-      iex> asset_tracker = AssetTracker.add_sale(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
+      iex> AssetTracker.add_sale(asset_tracker, "APPL", "2021-01-01", 100, 100)
       {%AssetTracker{
         sales: [
           %AssetTracker.Sale{
             symbol: "APPL",
             sell_date: "2021-01-01",
-            quantity: 100,
-            unit_price: 100.0,
-            average_cost: 100.0
+            quantity: Decimal.new("100"),
+            unit_price: Decimal.new("100"),
+            average_cost: Decimal.new("100")
           }
         ],
         purchases: []
-      }, 0.0}
+      }, Decimal.new("0")}
   """
   def add_sale(asset_tracker, asset_symbol, sell_date, quantity, unit_price) do
-    Sale.new(asset_symbol, sell_date, quantity, unit_price)
+    Sale.new(asset_symbol, sell_date, Decimal.new(quantity), Decimal.new(unit_price))
     |> Helper.add_sale(asset_tracker)
-    |> Helper.deduct_from_purchases(asset_symbol, quantity)
+    |> Helper.deduct_from_purchases(asset_symbol, Decimal.new(quantity))
     |> case do
       {updated_asset_tracker, selled_assets} ->
         {updated_asset_tracker, selled_assets, unit_price}
@@ -90,21 +90,23 @@ defmodule AssetTracker do
 
       iex> asset_tracker = AssetTracker.new()
       %AssetTracker{sales: [], purchases: []}
-      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100.00)
+      iex> asset_tracker = AssetTracker.add_purchase(asset_tracker, "APPL", "2021-01-01", 100, 100)
       %AssetTracker{
         sales: [],
         purchases: [
           %AssetTracker.Purchase{
             symbol: "APPL",
             settle_date: "2021-01-01",
-            quantity: 100,
-            unit_price: 100.0
+            quantity: Decimal.new("100"),
+            unit_price: Decimal.new("100")
           }
         ]
       }
-      iex> AssetTracker.unrealized_gain_or_loss(asset_tracker, "APPL", 200.00)
-      10000.0
+      iex> AssetTracker.unrealized_gain_or_loss(asset_tracker, "APPL", 200)
+      Decimal.new("10000")
   """
+  def unrealized_gain_or_loss(%{purchases: []}, _, _), do: Decimal.new("0")
+
   def unrealized_gain_or_loss(
         %{purchases: purchases} = _asset_tracker,
         asset_symbol,
@@ -114,17 +116,17 @@ defmodule AssetTracker do
       purchases
       |> Enum.filter(fn %{symbol: symbol} -> symbol == asset_symbol end)
       |> Enum.map(fn %{quantity: quantity, unit_price: unit_price} ->
-        quantity * unit_price
+        Decimal.mult(quantity, unit_price)
       end)
-      |> Enum.sum()
+      |> Enum.reduce(&Decimal.add/2)
 
     revenue =
       purchases
       |> Enum.filter(fn %{symbol: symbol} -> symbol == asset_symbol end)
       |> Enum.map(fn %{quantity: quantity} -> quantity end)
-      |> Enum.sum()
-      |> Kernel.*(market_price)
+      |> Enum.reduce(&Decimal.add/2)
+      |> Decimal.mult(market_price)
 
-    revenue - cost
+    Decimal.sub(revenue, cost)
   end
 end
